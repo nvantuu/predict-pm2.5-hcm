@@ -49,11 +49,8 @@ def main():
     """ Tested on different parameters,
      Save only the metric of the combined model"""
 
-    # stride_preds = [1, 2, 4, 8]
-    # window_sizes = [4, 8, 10, 12, 16, 18, 24, 32]
-
-    stride_preds = [1, 2]
-    window_sizes = [4, 8]
+    stride_preds = [1, 2, 4, 8]
+    window_sizes = [4, 8, 10, 12, 16, 18, 24, 32]
 
     df_metrics = pd.DataFrame(columns=['Model', 'MAE', 'RMSE', 'r2', 'R'])
 

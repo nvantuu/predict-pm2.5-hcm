@@ -37,7 +37,7 @@ lstm_params = {
     'validation_split': 0.25,
     'window_size': window_size,
     'feature_num': 9,
-    'epochs': 2,
+    'epochs': 40,
     'lr': 0.01,
     'drop_rate': 0.5,
     'epochs_drop': 5,
