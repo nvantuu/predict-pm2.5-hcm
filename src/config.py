@@ -1,15 +1,21 @@
 import os
 
-parent_dir = os.path.dirname(os.getcwd())
+# parent_dir = os.path.dirname(os.getcwd())
+parent_dir = os.getcwd()
+
 lgbm_output = os.path.join(parent_dir, 'output', 'lgbm_model')
 lstm_output = os.path.join(parent_dir, 'output', 'lstm_model')
 
 
 # process data config
+features_list = []
 fname_data = "clean_data.csv"
 window_size = 12
-hop_size = 6
+stride_pred = 6        # stride of prediction
 train_ratio = 0.8
+
+#
+unique_name = str(stride_pred) + 'h ' + str(window_size) + 'T'
 
 
 # lightgbm config

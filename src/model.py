@@ -13,7 +13,7 @@ from keras.layers import Dropout
 from tensorflow import keras
 import tensorflow as tf
 
-import config as c
+from . import config as c
 
 
 class LightGBMModel:
@@ -27,8 +27,7 @@ class LightGBMModel:
         return self.model.predict(xte)
 
     def save_model(self, path):
-        time_now = str(c.hop_size) + 'h ' + datetime.now().strftime('%Y-%m-%d %H-%M')
-        path = os.path.join(path, 'models', time_now + ".txt")
+        path = os.path.join(path, c.unique_name + ".txt")
         self.model.booster_.save_model(path)
 
 
@@ -67,13 +66,11 @@ class LTSMModel:
     def fit(self, X, y):
         lr_scheduler = tf.keras.callbacks.LearningRateScheduler(self.scheduler)
 
-        time_now = str(c.hop_size) + 'h ' + datetime.now().strftime('%Y-%m-%d %H-%M')
-
-        log_dir = os.path.join(self.params['output'], 'loggers', time_now)
+        log_dir = os.path.join(self.params['output'], 'loggers', c.unique_name)
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
         # Save the best model to .h5 file
-        model_path = os.path.join(self.params['output'], 'models', time_now + '.h5')
+        model_path = os.path.join(self.params['output'], 'models', c.unique_name + '.h5')
         best_model = keras.callbacks.ModelCheckpoint(filepath=model_path, monitor='val_loss',
                                                      save_best_only=True, verbose=self.params['verbose'])
 

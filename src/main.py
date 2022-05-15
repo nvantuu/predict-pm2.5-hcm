@@ -1,6 +1,7 @@
-from utils import *
-from model import *
-import src.config as c
+from .utils import *
+from .model import *
+from . import config as c
+import pandas as pd
 
 def main():
     parent_dir = c.parent_dir
@@ -11,7 +12,7 @@ def main():
     # print(df.columns)
 
 
-    X, y = generate_time_series_data(df, c.window_size, c.hop_size)
+    X, y = generate_time_series_data(df, c.window_size, c.stride_pred)
     X = normalize_data(X)
 
 
@@ -41,10 +42,11 @@ def main():
 
 
     """ =================== METRIC ====================== """
-    create_metrics_report_table(['LSTM', 'LightGBM', 'LSTM-TSLightGBM'],
+    df_metric = create_metrics_report_table(['LSTM', 'LightGBM', 'LSTM-TSLightGBM'],
                                 [y_pred1, y_pred2, y_pred], y_test)
 
 
+    df_metric.to_csv(os.path.join(parent_dir, 'output', 'results', c.unique_name + '.csv'), index=False)
 
 if __name__ == '__main__':
     main()

@@ -11,7 +11,7 @@ from sklearn.metrics import r2_score
 from datetime import datetime
 from datetime import timedelta
 
-import config as c
+from . import config as c
 
 
 def load_data(data_dir):
@@ -19,7 +19,7 @@ def load_data(data_dir):
     return df
 
 
-def generate_time_series_data(df, window_size, hop_size):
+def generate_time_series_data(df, window_size, stride_pred):
     # except for the feature: `time`
     feature_num = len(df.columns) - 1
 
@@ -40,7 +40,7 @@ def generate_time_series_data(df, window_size, hop_size):
     sub_df_list = decomposes_into_valid_sub_df_list()
     # print(f'Before remove sub_df which has length <= `time_step+1`: {len(sub_df_list)}')
 
-    sub_df_list = [ df_i for df_i in sub_df_list if len(df_i) >= window_size + hop_size ]
+    sub_df_list = [ df_i for df_i in sub_df_list if len(df_i) >= window_size + stride_pred ]
     # print(f'After remove sub_df which has length >= `time_step+1`: {len(sub_df_list)}')
 
 
@@ -52,12 +52,12 @@ def generate_time_series_data(df, window_size, hop_size):
         df_i = df_i.values.reshape(-1, feature_num)
         # print('len df_i:', len(df_i))
 
-        s, e = 0, len(df_i) - hop_size - window_size + 1
+        s, e = 0, len(df_i) - stride_pred - window_size + 1
         # print(s, " :", e)
 
         for i in range(s, e):
             X.append(df_i[i: i+12])
-            y.append(df_i[i+window_size+hop_size-1][-1])
+            y.append(df_i[i+window_size+stride_pred-1][-1])
 
     X, y = np.array(X), np.array(y)
 
@@ -123,7 +123,7 @@ def create_metrics_report_table(model_names, y_preds, y_true):
         model_names_i, y_pred_i = model_names[i], y_preds[i]
         mae_i, rmse_i, r2_i, R_i = calculate_metrics(y_pred_i, y_true)
 
-        model_names_i = model_names_i + '-' + str(c.hop_size) + 'h'
+        model_names_i = model_names_i + '-' + str(c.stride_pred) + 'h'
 
         df.loc[len(df.index)] = [model_names_i, mae_i, rmse_i, r2_i, R_i]
 
