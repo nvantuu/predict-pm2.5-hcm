@@ -1,6 +1,5 @@
 import os
 
-# parent_dir = os.path.dirname(os.getcwd())
 parent_dir = os.getcwd()
 
 lgbm_output = os.path.join(parent_dir, 'output', 'lgbm_model')
@@ -8,14 +7,16 @@ lstm_output = os.path.join(parent_dir, 'output', 'lstm_model')
 
 
 # process data config
-features_list = []
 fname_data = "clean_data.csv"
-window_size = 8
-stride_pred = 1        # stride of prediction
+features_list = ['temperature','dewpoint_temperature','pressure','humidity',
+                'wind_speed','wind_direction','vision','clouds','PM25_Concentration']
+
+window_size = 8                     # length in one sample
+stride_pred = 2                     # stride of prediction
 train_ratio = 0.8
 
 # get unique
-unique_name = str(stride_pred) + 'h ' + str(window_size) + 'T'
+unique_name = str(stride_pred) + 'h-' + str(window_size) + 'T'
 
 
 # lightgbm config

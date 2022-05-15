@@ -1,6 +1,4 @@
 import os
-from datetime import datetime
-
 # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 # os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
@@ -51,7 +49,7 @@ class LTSMModel:
                       loss='mse',
                       metrics=['mae', tf.keras.metrics.RootMeanSquaredError()])
 
-        print(self.model.summary())
+        # print(self.model.summary())
 
     def scheduler(self, epoch, lr):
         epochs_drop = self.params['epochs_drop']

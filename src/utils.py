@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 import math
@@ -14,15 +15,38 @@ from datetime import timedelta
 from . import config as c
 
 
+def create_folders_for_output(parent_dir):
+    def create_folder(folder_path):
+        folder_path = os.path.abspath(folder_path)
+        project_folder = os.path.dirname(os.getcwd())
+
+        if os.path.commonpath([folder_path, project_folder]) != project_folder:
+            return -1
+        if folder_path == project_folder:
+            return 0
+        if os.path.isdir(folder_path):
+            return 0
+        create_folder(os.path.dirname(folder_path))
+        os.mkdir(folder_path)
+        return 0
+
+    create_folder(os.path.join(parent_dir, 'output'))
+    create_folder(os.path.join(parent_dir, 'output', 'lgbm_model'))
+    create_folder(os.path.join(parent_dir, 'output', 'lstm_model'))
+    create_folder(os.path.join(parent_dir, 'output', 'results'))
+    create_folder(os.path.join(parent_dir, 'output', 'lgbm_model', 'models'))
+    create_folder(os.path.join(parent_dir, 'output', 'lgbm_model', 'configs'))
+    create_folder(os.path.join(parent_dir, 'output', 'lstm_model', 'models'))
+    create_folder(os.path.join(parent_dir, 'output', 'lstm_model', 'loggers'))
+    create_folder(os.path.join(parent_dir, 'output', 'lstm_model', 'configs'))
+
+
 def load_data(data_dir):
     df = pd.read_csv(data_dir)
     return df
 
 
 def generate_time_series_data(df, window_size, stride_pred):
-    print('lol', window_size, stride_pred)
-    # except for the feature: `time`
-    feature_num = len(df.columns) - 1
 
     def decomposes_into_valid_sub_df_list():
         list_df = []
@@ -45,10 +69,14 @@ def generate_time_series_data(df, window_size, stride_pred):
     # print(f'After remove sub_df which has length >= `time_step+1`: {len(sub_df_list)}')
 
 
+    # X_training, y_training list
     X, y = [], []
 
+    feature_num = len(c.features_list)
+
     for df_i in sub_df_list:
-        df_i = df_i[['temperature','dewpoint_temperature','pressure','humidity','wind_speed','wind_direction','vision','clouds','PM25_Concentration']]
+        # list contain all feature in dataframe, except for the feature: `time`
+        df_i = df_i[c.features_list]
         # convert dataframe to numpy array
         df_i = df_i.values.reshape(-1, feature_num)
         # print('len df_i:', len(df_i))
@@ -71,20 +99,20 @@ def generate_time_series_data(df, window_size, stride_pred):
 
     return X, y
 
-def normalize_data(X):
 
-    window_size, feature_num = X[0].shape
-    print('lol: ', window_size, feature_num)
+def normalize_data(X):
+    """ Min Max Scaler for time series data in np.array format,
+     have shape (length, window_size, feature_num) """
+    # auto window_size, feature_num
+    ws, fn = X[0].shape
     sc = MinMaxScaler()
 
-    X = sc.fit_transform(X.reshape(-1, window_size * feature_num))
-    X = X.reshape(-1, window_size, feature_num)
-
+    X = sc.fit_transform(X.reshape(-1, ws * fn))
+    X = X.reshape(-1, ws, fn)
     return X
 
 
 def split_data(X, y, train_ratio):
-
     split_point = round(len(X) * train_ratio)
     x_train, x_test = X[:split_point], X[split_point:]
     y_train, y_test = y[:split_point], y[split_point:]
@@ -93,9 +121,6 @@ def split_data(X, y, train_ratio):
 
 
 def compute_weight_sharing(y_pred1, y_pred2, y_true):
-
-    print(y_pred1.shape, y_pred2.shape)
-
     E1 = np.abs(y_pred1 - y_true)
     E2 = np.abs(y_pred2 - y_true)
     E = np.array([[E1.dot(E1), E1.dot(E2)], [E2.dot(E1), E2.dot(E2)]])
@@ -104,7 +129,6 @@ def compute_weight_sharing(y_pred1, y_pred2, y_true):
     E_inv = np.linalg.pinv(E)
 
     w = E_inv.dot(R) / R.T.dot(E_inv).dot(R)
-
     w1, w2 = w
     return w1, w2
 
@@ -118,20 +142,27 @@ def calculate_metrics(y_p, y_t):
     return mae, rmse, r2, R
 
 
-def create_metrics_report_table(model_names, y_preds, y_true):
-
+def create_metrics_report_table(model_names, y_preds, y_trues):
     df = pd.DataFrame(columns=['Model', 'MAE', 'RMSE', 'r2', 'R'])
 
     for i in range(len(model_names)):
         model_names_i, y_pred_i = model_names[i], y_preds[i]
-        mae_i, rmse_i, r2_i, R_i = calculate_metrics(y_pred_i, y_true)
-
-        model_names_i = model_names_i + '-' + str(c.stride_pred) + 'h'
-
+        mae_i, rmse_i, r2_i, R_i = calculate_metrics(y_pred_i, y_trues[i])
+        model_names_i = model_names_i + '-' + c.unique_name
         df.loc[len(df.index)] = [model_names_i, mae_i, rmse_i, r2_i, R_i]
 
-    print(df)
+    # df.loc[len(df.index)] = [None, None, None, None, None]
+    # print(df)
+
     return df
+
+
+
+def auto_correct_config(window_size, stride_pred):
+    c.stride_pred = stride_pred
+    c.window_size = window_size
+    c.lstm_params['window_size'] = window_size
+    c.unique_name = str(stride_pred) + 'h-' + str(window_size) + 'T'
 
 
 
