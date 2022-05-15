@@ -27,7 +27,7 @@ class LightGBMModel:
         return self.model.predict(xte)
 
     def save_model(self, path):
-        path = os.path.join(path, c.unique_name + ".txt")
+        path = os.path.join(path, 'models', c.unique_name + ".txt")
         self.model.booster_.save_model(path)
 
 
