@@ -20,6 +20,7 @@ def load_data(data_dir):
 
 
 def generate_time_series_data(df, window_size, stride_pred):
+    print('lol', window_size, stride_pred)
     # except for the feature: `time`
     feature_num = len(df.columns) - 1
 
@@ -56,7 +57,7 @@ def generate_time_series_data(df, window_size, stride_pred):
         # print(s, " :", e)
 
         for i in range(s, e):
-            X.append(df_i[i: i+12])
+            X.append(df_i[i: i+window_size])
             y.append(df_i[i+window_size+stride_pred-1][-1])
 
     X, y = np.array(X), np.array(y)
@@ -71,7 +72,9 @@ def generate_time_series_data(df, window_size, stride_pred):
     return X, y
 
 def normalize_data(X):
+
     window_size, feature_num = X[0].shape
+    print('lol: ', window_size, feature_num)
     sc = MinMaxScaler()
 
     X = sc.fit_transform(X.reshape(-1, window_size * feature_num))

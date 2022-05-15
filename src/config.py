@@ -10,11 +10,11 @@ lstm_output = os.path.join(parent_dir, 'output', 'lstm_model')
 # process data config
 features_list = []
 fname_data = "clean_data.csv"
-window_size = 12
-stride_pred = 6        # stride of prediction
+window_size = 8
+stride_pred = 1        # stride of prediction
 train_ratio = 0.8
 
-#
+# get unique
 unique_name = str(stride_pred) + 'h ' + str(window_size) + 'T'
 
 
@@ -25,8 +25,8 @@ lgbm_params = {
     'metric': 'mae',
     'max_depth': 10,
     'learning_rate': 0.01,
-    'n_estimators': 1000,
-    'verbose': 0,
+    'n_estimators': 700,
+    'verbose': 1,
     'force_col_wise': True
 }
 
@@ -34,12 +34,12 @@ lgbm_params = {
 # LSTM config
 lstm_params = {
     'validation_split': 0.25,
-    'window_size': 12,
+    'window_size': window_size,
     'feature_num': 9,
     'epochs': 2,
     'lr': 0.01,
     'drop_rate': 0.5,
-    'epochs_drop': 20,
+    'epochs_drop': 5,
     'verbose': 1,
     'batch_size': 32,
     'output': os.path.join(parent_dir, 'output', 'lstm_model')
