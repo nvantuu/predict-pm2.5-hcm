@@ -8,7 +8,6 @@ from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score
 
-
 from datetime import datetime
 from datetime import timedelta
 
@@ -16,6 +15,11 @@ from . import config as c
 
 
 def create_folders_for_output(parent_dir):
+    """ create an output folder,
+    to store all the outputs of the trained model:
+    weights of models, metrics of models """
+
+
     def create_folder(folder_path):
         folder_path = os.path.abspath(folder_path)
         project_folder = os.path.dirname(os.getcwd())
@@ -42,13 +46,20 @@ def create_folders_for_output(parent_dir):
 
 
 def load_data(data_dir):
+    """ read csv file data to dataframe """
     df = pd.read_csv(data_dir)
     return df
 
 
 def generate_time_series_data(df, window_size, stride_pred):
+    """ generate time series data with existing dataframe
+    with number of data points in one sampling = window_size and
+    prediction distance = stride_pred respectively """
 
     def decomposes_into_valid_sub_df_list():
+        """ subdivide the parent df into a list of dataframes containing continuous data points
+        discontinuous data points are adjacent points and the distance is > 1 hour """
+
         list_df = []
         mark = 0
 
@@ -62,9 +73,11 @@ def generate_time_series_data(df, window_size, stride_pred):
 
         return list_df
 
+    # list of data frames containing continuous data
     sub_df_list = decomposes_into_valid_sub_df_list()
     # print(f'Before remove sub_df which has length <= `time_step+1`: {len(sub_df_list)}')
 
+    # filter out a list of data frames of suitable length to sample the data
     sub_df_list = [ df_i for df_i in sub_df_list if len(df_i) >= window_size + stride_pred ]
     # print(f'After remove sub_df which has length >= `time_step+1`: {len(sub_df_list)}')
 
@@ -72,6 +85,7 @@ def generate_time_series_data(df, window_size, stride_pred):
     # X_training, y_training list
     X, y = [], []
 
+    # list columns of dataframe
     feature_num = len(c.features_list)
 
     for df_i in sub_df_list:
@@ -81,9 +95,9 @@ def generate_time_series_data(df, window_size, stride_pred):
         df_i = df_i.values.reshape(-1, feature_num)
         # print('len df_i:', len(df_i))
 
+        # create sample for data
         s, e = 0, len(df_i) - stride_pred - window_size + 1
         # print(s, " :", e)
-
         for i in range(s, e):
             X.append(df_i[i: i+window_size])
             y.append(df_i[i+window_size+stride_pred-1][-1])
@@ -133,6 +147,7 @@ def compute_weight_sharing(y_pred1, y_pred2, y_true):
     return w1, w2
 
 def calculate_metrics(y_p, y_t):
+    """ calculate metrics based on the predicted output and actual output of the testset """
     mae = mean_absolute_error(y_p, y_t)
     rmse = math.sqrt(mean_squared_error(y_p, y_t))
     r2 = r2_score(y_p, y_t)
@@ -143,6 +158,9 @@ def calculate_metrics(y_p, y_t):
 
 
 def create_metrics_report_table(model_names, y_preds, y_trues):
+    """ calculate metrics and create a dataframe
+    that stores metrics of the list of models """
+
     df = pd.DataFrame(columns=['Model', 'MAE', 'RMSE', 'r2', 'R'])
 
     for i in range(len(model_names)):
@@ -157,8 +175,9 @@ def create_metrics_report_table(model_names, y_preds, y_trues):
     return df
 
 
-
 def auto_correct_config(window_size, stride_pred):
+    """ automatically correct value in config.py file
+    when window_size and stride_pred change value """
     c.stride_pred = stride_pred
     c.window_size = window_size
     c.lstm_params['window_size'] = window_size

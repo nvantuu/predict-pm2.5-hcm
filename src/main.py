@@ -4,9 +4,11 @@ from .model import *
 from . import config as c
 
 def main():
+    # get global path to this folders `predict-pm2.5-hcm`
     parent_dir = c.parent_dir
     create_folders_for_output(parent_dir)
 
+    # read training data to dataframe
     data_dir = os.path.join(parent_dir, 'data', 'training_data', c.fname_data)
     df = load_data(data_dir=data_dir)
     # print(df.columns)
@@ -45,8 +47,7 @@ def main():
 
 
 
-
-    """ Tested on different parameters,
+    """ Tested on different hyperparams: stride_pred and window_size,
      Save only the metric of the combined model"""
 
     stride_preds = [1, 2, 4, 8]
@@ -56,6 +57,9 @@ def main():
 
     for sp in stride_preds:
         for ws in window_sizes:
+
+            # correct config: all config variables related to
+            # `stride_pred` = `sp` and `window_size` =  `ws`
             auto_correct_config(window_size=ws, stride_pred=sp)
 
             """ ================ PREPARE DATA TRAINING ================ """
@@ -65,26 +69,35 @@ def main():
             # split data in to train/validation
             x_train, y_train, x_test, y_test = split_data(X, y, c.train_ratio)
 
+
             """ ================== LSTM ====================== """
             lstm = LTSMModel(params=c.lstm_params)
             lstm.fit(X=x_train, y=y_train)
 
+            # predict testset using the trained LSTM model
             y_pred1 = lstm.predict(x_test).flatten()
 
 
             """ ================= LGBM ======================== """
+            # prepare data for lgbm: flatten data point
             _, fn = x_train[0].shape
             lgbm = LightGBMModel(c.lgbm_params)
             x_train, x_test = x_train.reshape(-1, ws * fn), x_test.reshape(-1, ws * fn)
+
+
             lgbm.fit(X=x_train, y=y_train)
             lgbm.save_model(c.lgbm_output)
 
+            # predict testset using the trained LGBM model
             y_pred2 = lgbm.predict(x_test).flatten()
+
 
 
             """ ============== LSTM-TSLightGBM ================== """
             w1, w2 = compute_weight_sharing(y_pred1, y_pred2, y_test)
             y_pred = w1 * y_pred1 + w2 * y_pred2
+
+
 
             """ =================== METRIC ====================== """
             df_metric = create_metrics_report_table(['LSTM-TSLightGBM'],
@@ -92,6 +105,7 @@ def main():
             # df_metric.to_csv(os.path.join(parent_dir, 'output', 'results', c.unique_name + '.csv'), index=False)
             df_metrics = pd.concat([df_metrics, df_metric], axis=0, ignore_index=True)
 
+    # save metrics of hyper models to file.csv
     df_metrics.to_csv(os.path.join(parent_dir, 'output', 'results', 'metrics.csv'), index=False)
 
 if __name__ == '__main__':

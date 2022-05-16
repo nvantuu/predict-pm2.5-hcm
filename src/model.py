@@ -16,15 +16,19 @@ from . import config as c
 
 class LightGBMModel:
     def __init__(self, params):
+        """ initialize lgbm model with parameters defined in config.py """
         self.model = lgb.LGBMModel(**params)
 
     def fit(self, X, y):
+        """ """
         self.model = self.model.fit(X=X, y=y)
 
     def predict(self, xte):
+        """ return 1D-np.array is y_pred for testset """
         return self.model.predict(xte)
 
     def save_model(self, path):
+        """ save lgbm model parameters, with file format: .txt """
         path = os.path.join(path, 'models', c.unique_name + ".txt")
         self.model.booster_.save_model(path)
 
@@ -52,9 +56,11 @@ class LTSMModel:
         # print(self.model.summary())
 
     def scheduler(self, epoch, lr):
+        """ decrease `learning_rate` after each `num_epochs` = `epochs_drop`,
+         at a rate of `drop_rate` """
+
         epochs_drop = self.params['epochs_drop']
         drop_rate = self.params['drop_rate']
-
         print(f"epoch: {epoch:03d} - learning_rate: {lr:.05f}")
         if epoch % epochs_drop == 0 and epoch > 0:
             return lr * drop_rate
@@ -62,6 +68,7 @@ class LTSMModel:
             return lr
 
     def fit(self, X, y):
+        """  """
         lr_scheduler = tf.keras.callbacks.LearningRateScheduler(self.scheduler)
 
         log_dir = os.path.join(self.params['output'], 'loggers', c.unique_name)
@@ -79,6 +86,7 @@ class LTSMModel:
                        callbacks=[best_model, tensorboard_callback, lr_scheduler])
 
     def predict(self, xte):
+        """ return 1D-np.array is y_preds for testset """
         return self.model.predict(xte)
 
 
