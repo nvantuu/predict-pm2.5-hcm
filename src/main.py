@@ -77,6 +77,9 @@ def main():
             # predict testset using the trained LSTM model
             y_pred1 = lstm.predict(x_test).flatten()
 
+            # store predict x_train, using for compute weight sharing of two model
+            ytr_pred1 = lstm.predict(x_train).flatten()
+
 
             """ ================= LGBM ======================== """
             # prepare data for lgbm: flatten data point
@@ -91,10 +94,13 @@ def main():
             # predict testset using the trained LGBM model
             y_pred2 = lgbm.predict(x_test).flatten()
 
+            # store predict x_train, using for compute weight sharing of two model
+            ytr_pred2 = lgbm.predict(x_train).flatten()
+
 
 
             """ ============== LSTM-TSLightGBM ================== """
-            w1, w2 = compute_weight_sharing(y_pred1, y_pred2, y_test)
+            w1, w2 = compute_weight_sharing(ytr_pred1, ytr_pred2, y_train)
             y_pred = w1 * y_pred1 + w2 * y_pred2
 
 

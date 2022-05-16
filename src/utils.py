@@ -134,9 +134,11 @@ def split_data(X, y, train_ratio):
     return x_train, y_train, x_test, y_test
 
 
-def compute_weight_sharing(y_pred1, y_pred2, y_true):
-    E1 = np.abs(y_pred1 - y_true)
-    E2 = np.abs(y_pred2 - y_true)
+def compute_weight_sharing(ytr_pred1, ytr_pred2, ytr_true):
+    """ Compute the shared weights based on the results
+    of the two models predicting the results of the training dataset """
+    E1 = np.abs(ytr_pred1 - ytr_true)
+    E2 = np.abs(ytr_pred2 - ytr_true)
     E = np.array([[E1.dot(E1), E1.dot(E2)], [E2.dot(E1), E2.dot(E2)]])
 
     R = np.array([1, 1])

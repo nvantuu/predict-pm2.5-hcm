@@ -13,7 +13,7 @@ features_list = ['temperature','dewpoint_temperature','pressure','humidity',
 
 window_size = 8                     # length in one sample
 stride_pred = 2                     # stride of prediction
-train_ratio = 0.8
+train_ratio = 0.75
 
 # get unique
 unique_name = str(stride_pred) + 'h-' + str(window_size) + 'T'
