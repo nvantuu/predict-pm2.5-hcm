@@ -17,7 +17,7 @@ def main():
     # X, y = generate_time_series_data(df, c.window_size, c.stride_pred)
     # X = normalize_data(X)
     # print("Checking correctness of sample generation ::")
-    # print(f"The shape of a pattern is {X[0].shape}, the correct shape is ({ws}, {c.num_feature}))")
+    # print(f"The shape of a sample is {X[0].shape}, the correct shape is ({ws}, {c.num_feature}))")
     #
     # # split data in to train/validation
     # x_train, y_train, x_test, y_test = split_data(X, y, c.train_ratio)
@@ -62,11 +62,8 @@ def main():
     """ Tested on different hyperparams: stride_pred and window_size,
      Save only the metric of the combined model"""
 
-    # stride_preds = [1, 2, 4, 8]
-    # window_sizes = [4, 8, 10, 12, 16, 18, 24, 32]
-
-    stride_preds = [1, 2]
-    window_sizes = [4, 8]
+    stride_preds = [1, 2, 4, 8]
+    window_sizes = [4, 8, 10, 12, 16, 18, 24, 32]
 
     df_metrics = pd.DataFrame(columns=['Model', 'MAE', 'RMSE', 'r2', 'R'])
 
@@ -81,7 +78,7 @@ def main():
             X, y = generate_time_series_data(df, c.window_size, c.stride_pred)
             X = normalize_data(X)
             print("Checking correctness of sample generation ::")
-            print(f"The shape of a pattern is {X[0] .shape}, the correct shape is ({ws}, {c.num_feature}))")
+            print(f"The shape of a sample is {X[0] .shape}, the correct shape is ({ws}, {c.num_feature}))")
 
             # split data in to train/validation
             x_train, y_train, x_test, y_test = split_data(X, y, c.train_ratio)
@@ -113,7 +110,6 @@ def main():
 
             # store predict x_train, using for compute weight sharing of two model
             ytr_pred2 = lgbm.predict(x_train).flatten()
-
 
 
             """ ============== LSTM-TSLightGBM ================== """

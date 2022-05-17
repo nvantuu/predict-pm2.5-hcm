@@ -1,8 +1,4 @@
-*.h5
-*.txt
 .idea/
-output/lgbm_model/
-output/lstm_model/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
