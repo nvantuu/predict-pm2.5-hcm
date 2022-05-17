@@ -4,20 +4,22 @@ parent_dir = os.getcwd()
 
 lgbm_output = os.path.join(parent_dir, 'output', 'lgbm_model')
 lstm_output = os.path.join(parent_dir, 'output', 'lstm_model')
+img_output = os.path.join(parent_dir, 'output', 'img')
 
 
 # process data config
 fname_data = "clean_data.csv"
 features_list = ['temperature','dewpoint_temperature','pressure','humidity',
                 'wind_speed','wind_direction','vision','clouds','PM25_Concentration']
+num_feature = len(features_list)
+
 
 window_size = 8                     # length in one sample
 stride_pred = 2                     # stride of prediction
-train_ratio = 0.75
+train_ratio = 0.8
 
 # get unique
 unique_name = str(stride_pred) + 'h-' + str(window_size) + 'T'
-
 
 # lightgbm config
 lgbm_params = {
@@ -35,8 +37,6 @@ lgbm_params = {
 # LSTM config
 lstm_params = {
     'validation_split': 0.25,
-    'window_size': window_size,
-    'feature_num': 9,
     'epochs': 40,
     'lr': 0.01,
     'drop_rate': 0.5,

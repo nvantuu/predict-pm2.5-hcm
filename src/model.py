@@ -40,9 +40,9 @@ class LTSMModel:
         self.model = Sequential()
 
         self.model.add(LSTM(units=128,
-                            input_shape=(self.params['window_size'], self.params['feature_num']),
+                            input_shape=(c.window_size, c.num_feature),
                             return_sequences=True))
-        self.model.add(LSTM(units=128, input_shape=(self.params['window_size'], 128)))
+        self.model.add(LSTM(units=128, input_shape=(c.window_size, 128)))
         self.model.add(Dense(units=320, activation="relu"))
         self.model.add(Dropout(0.2))
         self.model.add(Dense(units=160, activation="relu"))

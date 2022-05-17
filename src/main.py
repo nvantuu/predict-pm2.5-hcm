@@ -16,6 +16,8 @@ def main():
     # """ ================ PREPARE DATA TRAINING ================ """
     # X, y = generate_time_series_data(df, c.window_size, c.stride_pred)
     # X = normalize_data(X)
+    # print("Checking correctness of sample generation ::")
+    # print(f"The shape of a pattern is {X[0].shape}, the correct shape is ({ws}, {c.num_feature}))")
     #
     # # split data in to train/validation
     # x_train, y_train, x_test, y_test = split_data(X, y, c.train_ratio)
@@ -24,24 +26,34 @@ def main():
     # lstm = LTSMModel(params=c.lstm_params)
     # lstm.fit(X=x_train, y=y_train)
     #
+    # # predict testset using the trained LSTM model
     # y_pred1 = lstm.predict(x_test).flatten()
     #
+    # # store predict x_train, using for compute weight sharing of two model
+    # ytr_pred1 = lstm.predict(x_train).flatten()
+    #
     # """ ================= LGBM ======================== """
-    # ws, fn = x_train[0].shape
+    # # prepare data for lgbm: flatten data point
+    # _, fn = x_train[0].shape
     # lgbm = LightGBMModel(c.lgbm_params)
     # x_train, x_test = x_train.reshape(-1, ws * fn), x_test.reshape(-1, ws * fn)
+    #
     # lgbm.fit(X=x_train, y=y_train)
     # lgbm.save_model(c.lgbm_output)
     #
+    # # predict testset using the trained LGBM model
     # y_pred2 = lgbm.predict(x_test).flatten()
     #
+    # # store predict x_train, using for compute weight sharing of two model
+    # ytr_pred2 = lgbm.predict(x_train).flatten()
+    #
     # """ ============== LSTM-TSLightGBM ================== """
-    # w1, w2 = compute_weight_sharing(y_pred1, y_pred2, y_test)
+    # w1, w2 = compute_weight_sharing(ytr_pred1, ytr_pred2, y_train)
     # y_pred = w1 * y_pred1 + w2 * y_pred2
     #
     # """ =================== METRIC ====================== """
     # df_metric = create_metrics_report_table(['LSTM', 'LightGBM', 'LSTM-TSLightGBM'],
-    #                                         [y_pred1, y_pred2, y_pred], [y_test, y_test, y_test])
+    #                                         [y_pred1, y_pred2, y_pred], [y_test] * 3)
     # df_metric.to_csv(os.path.join(parent_dir, 'output', 'results', 'metrics.csv'), index=False)
 
 
@@ -50,8 +62,11 @@ def main():
     """ Tested on different hyperparams: stride_pred and window_size,
      Save only the metric of the combined model"""
 
-    stride_preds = [1, 2, 4, 8]
-    window_sizes = [4, 8, 10, 12, 16, 18, 24, 32]
+    # stride_preds = [1, 2, 4, 8]
+    # window_sizes = [4, 8, 10, 12, 16, 18, 24, 32]
+
+    stride_preds = [1, 2]
+    window_sizes = [4, 8]
 
     df_metrics = pd.DataFrame(columns=['Model', 'MAE', 'RMSE', 'r2', 'R'])
 
@@ -65,6 +80,8 @@ def main():
             """ ================ PREPARE DATA TRAINING ================ """
             X, y = generate_time_series_data(df, c.window_size, c.stride_pred)
             X = normalize_data(X)
+            print("Checking correctness of sample generation ::")
+            print(f"The shape of a pattern is {X[0] .shape}, the correct shape is ({ws}, {c.num_feature}))")
 
             # split data in to train/validation
             x_train, y_train, x_test, y_test = split_data(X, y, c.train_ratio)
@@ -103,11 +120,12 @@ def main():
             w1, w2 = compute_weight_sharing(ytr_pred1, ytr_pred2, y_train)
             y_pred = w1 * y_pred1 + w2 * y_pred2
 
+            draw_comparison_chart(y_pred, y_test)
 
 
             """ =================== METRIC ====================== """
-            df_metric = create_metrics_report_table(['LSTM-TSLightGBM'],
-                                                    [y_pred], [y_test])
+            df_metric = create_metrics_report_table(['LSTM', 'LightGBM', 'LSTM-TSLightGBM'],
+                                                    [y_pred1, y_pred2, y_pred], [y_test]*3)
             # df_metric.to_csv(os.path.join(parent_dir, 'output', 'results', c.unique_name + '.csv'), index=False)
             df_metrics = pd.concat([df_metrics, df_metric], axis=0, ignore_index=True)
 

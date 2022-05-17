@@ -3,13 +3,15 @@ import numpy as np
 import pandas as pd
 import math
 
+from datetime import datetime
+from datetime import timedelta
+
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score
 
-from datetime import datetime
-from datetime import timedelta
+import matplotlib.pyplot as plt
 
 from . import config as c
 
@@ -38,6 +40,7 @@ def create_folders_for_output(parent_dir):
     create_folder(os.path.join(parent_dir, 'output', 'lgbm_model'))
     create_folder(os.path.join(parent_dir, 'output', 'lstm_model'))
     create_folder(os.path.join(parent_dir, 'output', 'results'))
+    create_folder(os.path.join(parent_dir, 'output', 'img'))
     create_folder(os.path.join(parent_dir, 'output', 'lgbm_model', 'models'))
     create_folder(os.path.join(parent_dir, 'output', 'lgbm_model', 'configs'))
     create_folder(os.path.join(parent_dir, 'output', 'lstm_model', 'models'))
@@ -171,19 +174,43 @@ def create_metrics_report_table(model_names, y_preds, y_trues):
         model_names_i = model_names_i + '-' + c.unique_name
         df.loc[len(df.index)] = [model_names_i, mae_i, rmse_i, r2_i, R_i]
 
-    # df.loc[len(df.index)] = [None, None, None, None, None]
+    df.loc[len(df.index)] = [None, None, None, None, None]
     # print(df)
 
     return df
 
 
-def auto_correct_config(window_size, stride_pred):
+def auto_correct_config(window_size, stride_pred, feature_list=None):
     """ automatically correct value in config.py file
     when window_size and stride_pred change value """
+    if feature_list is not None:
+        c.features_list = feature_list
+        c.num_feature = len(feature_list)
+
     c.stride_pred = stride_pred
     c.window_size = window_size
-    c.lstm_params['window_size'] = window_size
     c.unique_name = str(stride_pred) + 'h-' + str(window_size) + 'T'
+
+
+
+def draw_comparison_chart(y_pred, y_true):
+    plt.plot(y_pred[:120], color='r')
+    plt.plot(y_true[:120], color='b')
+    plt.title(f'LSTM-TSLightGBM-{c.unique_name} predict of PM2.5 concentration')
+    plt.xlabel("Time")
+    plt.ylabel("ug/m3")
+    plt.legend(('prediction', 'reality'), loc='upper right')
+    print(c.img_output)
+    plt.savefig(os.path.join(c.img_output, c.unique_name + '.png'))
+    plt.clf()
+
+
+
+
+
+
+
+
 
 
 
