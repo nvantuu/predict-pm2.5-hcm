@@ -14,25 +14,6 @@ import tensorflow as tf
 from . import config as c
 
 
-class LightGBMModel:
-    def __init__(self, params):
-        """ initialize lgbm model with parameters defined in config.py """
-        self.model = lgb.LGBMModel(**params)
-
-    def fit(self, X, y):
-        """ """
-        self.model = self.model.fit(X=X, y=y)
-
-    def predict(self, xte):
-        """ return 1D-np.array is y_pred for testset """
-        return self.model.predict(xte)
-
-    def save_model(self, path):
-        """ save lgbm model parameters, with file format: .txt """
-        path = os.path.join(path, 'models', c.unique_name + ".txt")
-        self.model.booster_.save_model(path)
-
-
 class LTSMModel:
     def __init__(self, params):
         self.params = params
@@ -67,15 +48,15 @@ class LTSMModel:
         else:
             return lr
 
-    def fit(self, X, y):
+    def fit_and_save(self, X, y, path_save='default'):
         """  """
         lr_scheduler = tf.keras.callbacks.LearningRateScheduler(self.scheduler)
 
-        log_dir = os.path.join(self.params['output'], 'loggers', c.unique_name)
+        log_dir = os.path.join(path_save, 'loggers', c.unique_name)
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
         # Save the best model to .h5 file
-        model_path = os.path.join(self.params['output'], 'models', c.unique_name + '.h5')
+        model_path = os.path.join(path_save, c.unique_name + '.h5')
         best_model = keras.callbacks.ModelCheckpoint(filepath=model_path, monitor='val_loss',
                                                      save_best_only=True, verbose=self.params['verbose'])
 
@@ -88,6 +69,28 @@ class LTSMModel:
     def predict(self, xte):
         """ return 1D-np.array is y_preds for testset """
         return self.model.predict(xte)
+
+
+class LightGBMModel:
+    def __init__(self, params):
+        """ initialize lgbm model with parameters defined in config.py """
+        self.model = lgb.LGBMModel(**params)
+
+    def fit(self, X, y):
+        """ """
+        self.model = self.model.fit(X=X, y=y)
+
+    def predict(self, xte):
+        """ return 1D-np.array is y_pred for testset """
+        return self.model.predict(xte)
+
+    def save_model(self, path_save='default'):
+        """ save lgbm model parameters, with file format: .txt """
+        path = os.path.join(path_save, c.unique_name + ".txt")
+        self.model.booster_.save_model(path)
+
+
+
 
 
 

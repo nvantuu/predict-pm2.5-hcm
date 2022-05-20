@@ -11,7 +11,10 @@ from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score
 
+import scipy
 import matplotlib.pyplot as plt
+
+import json
 
 from . import config as c
 
@@ -37,15 +40,17 @@ def create_folders_for_output(parent_dir):
         return 0
 
     create_folder(os.path.join(parent_dir, 'output'))
+
+    create_folder(os.path.join(parent_dir, 'output', 'config'))
+    create_folder(os.path.join(parent_dir, 'output', 'img'))
     create_folder(os.path.join(parent_dir, 'output', 'lgbm_model'))
     create_folder(os.path.join(parent_dir, 'output', 'lstm_model'))
     create_folder(os.path.join(parent_dir, 'output', 'results'))
-    create_folder(os.path.join(parent_dir, 'output', 'img'))
-    create_folder(os.path.join(parent_dir, 'output', 'lgbm_model', 'models'))
-    create_folder(os.path.join(parent_dir, 'output', 'lgbm_model', 'configs'))
-    create_folder(os.path.join(parent_dir, 'output', 'lstm_model', 'models'))
+
+    create_folder(os.path.join(parent_dir, 'output', 'img', 'comp_graph'))
+    create_folder(os.path.join(parent_dir, 'output', 'img', 'scatter_plot'))
+
     create_folder(os.path.join(parent_dir, 'output', 'lstm_model', 'loggers'))
-    create_folder(os.path.join(parent_dir, 'output', 'lstm_model', 'configs'))
 
 
 def load_data(data_dir):
@@ -151,15 +156,19 @@ def compute_weight_sharing(ytr_pred1, ytr_pred2, ytr_true):
     w1, w2 = w
     return w1, w2
 
+def store_weight_sharing(w1, w2):
+    c.model_hyperparams['w1'] = w1
+    c.model_hyperparams['w2'] = w2
+
 def calculate_metrics(y_p, y_t):
     """ calculate metrics based on the predicted output and actual output of the testset """
     mae = mean_absolute_error(y_p, y_t)
     rmse = math.sqrt(mean_squared_error(y_p, y_t))
     r2 = r2_score(y_p, y_t)
     R = np.corrcoef(y_p, y_t)[0][1]
-    # print(f"Metrics of {model_name}: \nmae = {mae} \nrmse = {rmse} \nr^2 = {r2} \nR = {R}\n")
+    print(f"Metrics of: \nmae = {round(mae,2)} \nrmse = {round(rmse,2)} \nr^2 = {round(r2,2)} \nR = {round(R,2)}\n")
 
-    return mae, rmse, r2, R
+    return round(mae,2), round(rmse,2), round(r2,2), round(R,2)
 
 
 def create_metrics_report_table(model_names, y_preds, y_trues):
@@ -176,11 +185,10 @@ def create_metrics_report_table(model_names, y_preds, y_trues):
 
     df.loc[len(df.index)] = [None, None, None, None, None]
     # print(df)
-
     return df
 
 
-def auto_correct_config(window_size, stride_pred, feature_list=None):
+def auto_correct_config(window_size, stride_pred, train_ratio=0.8, feature_list=None):
     """ automatically correct value in config.py file
     when window_size and stride_pred change value """
     if feature_list is not None:
@@ -191,18 +199,43 @@ def auto_correct_config(window_size, stride_pred, feature_list=None):
     c.window_size = window_size
     c.unique_name = str(stride_pred) + 'h-' + str(window_size) + 'T'
 
+    c.model_hyperparams['window_size'] = window_size
+    c.model_hyperparams['stride_pred'] = stride_pred
+    c.model_hyperparams['unique_name'] = str(stride_pred) + 'h-' + str(window_size) + 'T'
+    c.model_hyperparams['train_ratio'] = train_ratio
+    return
 
-
-def draw_comparison_chart(y_pred, y_true):
-    plt.plot(y_pred[:120], color='r')
-    plt.plot(y_true[:120], color='b')
+def draw_comparison_graph(y_pred, y_true):
+    plt.plot(y_pred[:200], color='r')
+    plt.plot(y_true[:200], color='b')
     plt.title(f'LSTM-TSLightGBM-{c.unique_name} predict of PM2.5 concentration')
     plt.xlabel("Time")
     plt.ylabel("ug/m3")
     plt.legend(('prediction', 'reality'), loc='upper right')
-    print(c.img_output)
-    plt.savefig(os.path.join(c.img_output, c.unique_name + '.png'))
+    plt.savefig(os.path.join(c.img_output, 'comp_graph', c.unique_name + '.png'))
     plt.clf()
+
+
+def draw_scatter_plot(y_pred, y_true):
+    slope, intercept, r, p, stderr = scipy.stats.linregress(y_pred, y_true)
+    line = f'Regression line y:{intercept:.2f}+{slope:.2f}, r={r:.2f}'
+
+    fig, ax = plt.subplots()
+    ax.plot(y_pred, y_true, linewidth=0, marker='s', label='Data points')
+    ax.plot(y_pred, intercept + slope * y_pred, label=line)
+    ax.set_xlabel('y_pred')
+    ax.set_ylabel('y_true')
+    ax.legend(facecolor='white')
+    plt.savefig(os.path.join(c.img_output, 'scatter_plot', c.unique_name + '.png'))
+    plt.clf()
+
+
+def store_model_configuration():
+    config_dict = {'model_hyperparams': c.model_hyperparams, 'lstm_params': c.lstm_params, 'lgbm_params': c.lgbm_params}
+
+    file_config_dir = os.path.join(c.config_dir, c.unique_name + '.json')
+    with open(file_config_dir, 'w') as f:
+        json.dump(config_dict, f, ensure_ascii=False, indent=4)
 
 
 

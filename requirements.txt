@@ -6,3 +6,4 @@ torch~=1.11.0
 keras~=2.8.0
 tensorflow~=2.8.0
 matplotlib~=3.5.2
+scipy~=1.8.0

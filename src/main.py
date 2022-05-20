@@ -24,7 +24,7 @@ def main():
     #
     # """ ================== LSTM ====================== """
     # lstm = LTSMModel(params=c.lstm_params)
-    # lstm.fit(X=x_train, y=y_train)
+    # lstm.fit_and_save(X=x_train, y=y_train)
     #
     # # predict testset using the trained LSTM model
     # y_pred1 = lstm.predict(x_test).flatten()
@@ -62,6 +62,9 @@ def main():
     """ Tested on different hyperparams: stride_pred and window_size,
      Save only the metric of the combined model"""
 
+    # stride_preds = [1, 2]
+    # window_sizes = [4, 8]
+
     stride_preds = [1, 2, 4, 8]
     window_sizes = [4, 8, 10, 12, 16, 18, 24, 32]
 
@@ -73,50 +76,61 @@ def main():
             # correct config: all config variables related to
             # `stride_pred` = `sp` and `window_size` =  `ws`
             auto_correct_config(window_size=ws, stride_pred=sp)
+            print(f'- MODEL NAME: {c.unique_name}\n')
+
 
             """ ================ PREPARE DATA TRAINING ================ """
             X, y = generate_time_series_data(df, c.window_size, c.stride_pred)
             X = normalize_data(X)
-            print("Checking correctness of sample generation ::")
-            print(f"The shape of a sample is {X[0] .shape}, the correct shape is ({ws}, {c.num_feature}))")
+            print("- Checking correctness of sample generation:")
+            print(f" + the shape of a sample is {X[0] .shape}, the correct shape is ({ws}, {c.num_feature}))\n")
 
             # split data in to train/validation
             x_train, y_train, x_test, y_test = split_data(X, y, c.train_ratio)
+            print(f'- All {len(X)} samples:')
+            print(f' + train test split rate: {c.train_ratio}/{round(1-c.train_ratio, 2)}\n')
 
 
             """ ================== LSTM ====================== """
             lstm = LTSMModel(params=c.lstm_params)
-            lstm.fit(X=x_train, y=y_train)
-
-            # predict testset using the trained LSTM model
-            y_pred1 = lstm.predict(x_test).flatten()
+            lstm.fit_and_save(X=x_train, y=y_train, path_save=c.lstm_output)
 
             # store predict x_train, using for compute weight sharing of two model
             ytr_pred1 = lstm.predict(x_train).flatten()
+
+            # predict testset using the trained LSTM model
+            y_pred1 = lstm.predict(x_test).flatten()
 
 
             """ ================= LGBM ======================== """
             # prepare data for lgbm: flatten data point
             _, fn = x_train[0].shape
-            lgbm = LightGBMModel(c.lgbm_params)
             x_train, x_test = x_train.reshape(-1, ws * fn), x_test.reshape(-1, ws * fn)
 
-
+            lgbm = LightGBMModel(c.lgbm_params)
             lgbm.fit(X=x_train, y=y_train)
-            lgbm.save_model(c.lgbm_output)
-
-            # predict testset using the trained LGBM model
-            y_pred2 = lgbm.predict(x_test).flatten()
+            lgbm.save_model(path_save=c.lgbm_output)
 
             # store predict x_train, using for compute weight sharing of two model
             ytr_pred2 = lgbm.predict(x_train).flatten()
 
+            # predict testset using the trained LGBM model
+            y_pred2 = lgbm.predict(x_test).flatten()
+
 
             """ ============== LSTM-TSLightGBM ================== """
             w1, w2 = compute_weight_sharing(ytr_pred1, ytr_pred2, y_train)
+            store_weight_sharing(w1, w2)
+            store_model_configuration()
+
+
+            """ ========== Predict PM2.5 Concentration ========== """
+            # predict testset of LSTM-TSLightGBM model
             y_pred = w1 * y_pred1 + w2 * y_pred2
 
-            draw_comparison_chart(y_pred, y_test)
+            # graphing the results visualization
+            draw_comparison_graph(y_pred, y_test)
+            draw_scatter_plot(y_pred, y_test)
 
 
             """ =================== METRIC ====================== """
