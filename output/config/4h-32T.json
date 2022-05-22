@@ -1,0 +1,29 @@
+{
+    "model_hyperparams": {
+        "window_size": 32,
+        "stride_pred": 4,
+        "train_ratio": 0.8,
+        "unique_name": "4h-32T",
+        "w1": -0.5407451748290235,
+        "w2": 1.5407451748290235
+    },
+    "lstm_params": {
+        "validation_split": 0.2,
+        "epochs": 40,
+        "lr": 0.01,
+        "drop_rate": 0.5,
+        "epochs_drop": 5,
+        "verbose": 1,
+        "batch_size": 32
+    },
+    "lgbm_params": {
+        "boosting_type": "gbdt",
+        "objective": "regression",
+        "metric": "mae",
+        "max_depth": 10,
+        "learning_rate": 0.01,
+        "n_estimators": 700,
+        "verbose": 1,
+        "force_col_wise": true
+    }
+}
