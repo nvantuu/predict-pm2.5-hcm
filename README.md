@@ -18,6 +18,20 @@ tượng của một ngày
 [Dữ liệu PM2.5](https://www.airnow.gov/international/us-embassies-and-consulates/) của HCM được tải từ năm 2019 đến 2021.
 
 # Tiền xử lý dữ liệu
+Chi tiết quy trình, code tiền xử lý được mô tả rõ trong file `data/data_preprocessing.ipynb`
 # Huấn luyện mô hình
-"# predict-pm2.5-hcm" 
-"# predict-pm2.5-hcm" 
+Để huấn luyện mô hình LSTM-TSLightGBM kết hợp trước hết cần huấn luyện 2 mô hình đơn là LSTM
+
+và LightGBM sau đó kết hợp chúng lại với trọng số là e1, e2. Quá trình này được gói gọn trong
+
+module `main`.
+
+```console
+$ python3 src.main
+```
+# Test mô hình
+Test hiệu quả dự đoán của mô hình LSTM-TSLightGBM trên tập test.
+
+```console
+$ python3 src.api_test --model_name
+```
