@@ -9,7 +9,7 @@
 
 
 ```console
-$ node download_meteorology_data.js
+$ node src/download_meteorology_data.js
 ```
 
 - Dữ liệu tải về sẽ được lưu trong folder data: bao gồm nhiều file csv mỗi file tương ứng dữ liệu khí
